@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenDeepWiki API Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .container {
+            margin-bottom: 30px;
+        }
+        input, button, textarea {
+            padding: 8px;
+            margin: 5px 0;
+        }
+        input[type="text"] {
+            width: 100%;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            overflow: auto;
+        }
+        .response {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>OpenDeepWiki API Test</h1>
+    
+    <div class="container">
+        <h2>Submit Repository</h2>
+        <input type="text" id="gitUrl" placeholder="Git Repository URL" value="https://github.com/gin-gonic/gin.git">
+        <button onclick="submitRepo()">Submit Repository</button>
+        <div class="response">
+            <h3>Response:</h3>
+            <pre id="submitResponse">No response yet</pre>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Check Task Status</h2>
+        <input type="text" id="taskId" placeholder="Task ID">
+        <button onclick="checkStatus()">Check Status</button>
+        <div class="response">
+            <h3>Response:</h3>
+            <pre id="statusResponse">No response yet</pre>
+        </div>
+    </div>
+
+    <script>
+        const baseUrl = 'http://localhost:8080/api';
+
+        async function submitRepo() {
+            const gitUrl = document.getElementById('gitUrl').value;
+            if (!gitUrl) {
+                alert('Please enter a Git URL');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${baseUrl}/warehouse/repos`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ git_url: gitUrl })
+                });
+
+                const data = await response.json();
+                document.getElementById('submitResponse').textContent = JSON.stringify(data, null, 2);
+                
+                // If we got a task ID, put it in the task ID field
+                if (data.task_id) {
+                    document.getElementById('taskId').value = data.task_id;
+                }
+            } catch (error) {
+                document.getElementById('submitResponse').textContent = `Error: ${error.message}`;
+            }
+        }
+
+        async function checkStatus() {
+            const taskId = document.getElementById('taskId').value;
+            if (!taskId) {
+                alert('Please enter a Task ID');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${baseUrl}/warehouse/tasks/${taskId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                document.getElementById('statusResponse').textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('statusResponse').textContent = `Error: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html> 

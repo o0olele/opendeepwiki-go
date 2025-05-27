@@ -1,0 +1,19 @@
+# OpenDeepWiki Configuration
+
+# Server settings
+server:
+  address: ":8080"
+  
+# Repository settings
+repository:
+  dir: "./data/repos"
+
+# Database settings
+database:
+  path: "./data/sqlite/opendeepwiki.db" 
+
+llm:
+  provider_type: openai
+  api_key: none
+  model: qwen
+  base_url: http://192.168.1.6:8080
