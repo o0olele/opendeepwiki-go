@@ -8,6 +8,7 @@ require (
 	github.com/gin-contrib/cors v1.7.5
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-git/go-git/v5 v5.16.0
+	github.com/google/uuid v1.6.0
 	github.com/tmc/langchaingo v0.1.13
 	go.uber.org/zap v1.27.0
 	gopkg.in/yaml.v3 v3.0.1
@@ -54,7 +55,6 @@ require (
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/generative-ai-go v0.15.1 // indirect
 	github.com/google/s2a-go v0.1.7 // indirect
-	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.2 // indirect
 	github.com/googleapis/gax-go/v2 v2.12.4 // indirect
 	github.com/goph/emperror v0.17.2 // indirect

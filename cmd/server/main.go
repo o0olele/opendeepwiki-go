@@ -1,6 +1,8 @@
 package main
 
 import (
+	"embed"
+	"net/http"
 	"sync"
 
 	"github.com/gin-contrib/cors"
@@ -11,6 +13,9 @@ import (
 	"github.com/o0olele/opendeepwiki-go/internal/services"
 	"go.uber.org/zap"
 )
+
+//go:embed web/*
+var templateFS embed.FS
 
 func main() {
 
@@ -52,6 +57,16 @@ func main() {
 
 	// Setup Gin router
 	router := gin.Default()
+
+	router.Use(Serve("/", EmbedFolder(templateFS, "web")))
+	router.NoRoute(func(c *gin.Context) {
+		data, err := templateFS.ReadFile("web/index.html")
+		if err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+		c.Data(http.StatusOK, "text/html; charset=utf-8", data)
+	})
 
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowAllOrigins = true

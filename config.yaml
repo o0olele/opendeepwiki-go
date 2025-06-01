@@ -7,13 +7,23 @@ server:
 # Repository settings
 repository:
   dir: "./data/repos"
+  code: "./data/code"
+  vector: "./data/vector"
 
 # Database settings
 database:
   path: "./data/sqlite/opendeepwiki.db" 
 
+# LLM settings
 llm:
   provider_type: openai
-  api_key: none
-  model: qwen
-  base_url: http://192.168.1.6:8080
+  api_key: sk-xxxx
+  model: qwen3-14b
+  base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
+
+# Embedding settings
+embedding:
+  provider_type: llamacpp
+  api_key: sk-none
+  model: text-embedding-v3
+  base_url: http://192.168.97.93:8080
