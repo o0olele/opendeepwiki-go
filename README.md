@@ -51,11 +51,27 @@ server:
   
 # Repository settings
 repository:
-  dir: "./repos"
+  dir: "./data/repos"
+  code: "./data/code"
+  vector: "./data/vector"
 
 # Database settings
 database:
-  path: "./data/opendeepwiki.db"
+  path: "./data/sqlite/opendeepwiki.db" 
+
+# LLM settings
+llm:
+  provider_type: openai # support llama.cpp/openai/google
+  api_key: sk-xxxx
+  model: qwen3-14b
+  base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
+
+# Embedding settings
+embedding:
+  provider_type: llamacpp # support llama.cpp/openai
+  api_key: sk-none
+  model: text-embedding-v3
+  base_url: http://192.168.97.93:8080
 ```
 
 ### Running the Server
