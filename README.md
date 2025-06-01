@@ -87,6 +87,7 @@ embedding:
 
 ## TODO
 
+- [ ] Local path analyze
 - [ ] Delete repository
 - [ ] Update repository manually
 - [ ] Chat with the document
