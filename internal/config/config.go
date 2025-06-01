@@ -26,15 +26,19 @@ type EmbeddingConfig struct {
 	BaseURL      string `yaml:"base_url"`
 }
 
+type RepositoryConfig struct {
+	Dir    string `yaml:"dir"`
+	Code   string `yaml:"code"`
+	Vector string `yaml:"vector"`
+}
+
 // Config holds all configuration for the application
 type Config struct {
 	Server struct {
 		Address string `yaml:"address"`
 	} `yaml:"server"`
-	Repository struct {
-		Dir string `yaml:"dir"`
-	} `yaml:"repository"`
-	Database struct {
+	Repository RepositoryConfig `yaml:"repository"`
+	Database   struct {
 		Path string `yaml:"path"`
 	} `yaml:"database"`
 	LLM       LLMConfig       `yaml:"llm"`
@@ -129,4 +133,8 @@ func GetLLMConfig() *LLMConfig {
 
 func GetEmbeddingConfig() *EmbeddingConfig {
 	return &cfg.Embedding
+}
+
+func GetRepositoryConfig() *RepositoryConfig {
+	return &cfg.Repository
 }

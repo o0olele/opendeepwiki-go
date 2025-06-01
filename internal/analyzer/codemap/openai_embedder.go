@@ -5,11 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/o0olele/opendeepwiki-go/internal/config"
 	"github.com/o0olele/opendeepwiki-go/internal/llm/embedding"
+	"github.com/tmc/langchaingo/textsplitter"
 )
 
-// OpenAIEmbedder implements the Embedder interface using OpenAI embeddings
-type OpenAIEmbedder struct {
+// DocEmbedder implements the Embedder interface using OpenAI embeddings
+type DocEmbedder struct {
 	embedder   embedding.Embedder
 	storage    EmbeddingStorage
 	dimensions int
@@ -33,43 +35,60 @@ type EmbeddingRecord struct {
 	Score     float64           `json:"score"`
 }
 
-// NewOpenAIEmbedder creates a new OpenAI embedder
-func NewOpenAIEmbedder(apiKey, model, baseUrl string, dimensions int, storage EmbeddingStorage) (*OpenAIEmbedder, error) {
-	factory := embedding.NewFactory("openai", apiKey, model, baseUrl, dimensions)
+// NewEmbedder creates a new OpenAI embedder
+func NewEmbedder(storage EmbeddingStorage) (*DocEmbedder, error) {
+	var embeddingConfig = config.GetEmbeddingConfig()
+	var factory = embedding.NewFactory(
+		embeddingConfig.ProviderType,
+		embeddingConfig.APIKey,
+		embeddingConfig.Model,
+		embeddingConfig.BaseURL,
+		3)
 	embedder, err := factory.Create()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create embedder: %w", err)
 	}
 
-	return &OpenAIEmbedder{
+	return &DocEmbedder{
 		embedder:   embedder,
 		storage:    storage,
-		dimensions: dimensions,
+		dimensions: 3,
 	}, nil
 }
 
 // IndexDocument indexes a document with the given content and metadata
-func (e *OpenAIEmbedder) IndexDocument(id string, content string, metadata map[string]string) error {
-	// Generate embedding for the content
-	embeddings, err := e.embedder.Embed(context.Background(), []string{content})
+func (e *DocEmbedder) IndexDocument(id string, content string, metadata map[string]string) error {
+
+	splitter := textsplitter.NewTokenSplitter(
+		textsplitter.WithChunkSize(4096),
+		textsplitter.WithChunkOverlap(128))
+
+	chunks, err := splitter.SplitText(content)
 	if err != nil {
-		return fmt.Errorf("failed to generate embedding: %w", err)
+		return fmt.Errorf("failed to split text: %w", err)
 	}
 
-	if len(embeddings) == 0 {
-		return fmt.Errorf("no embedding generated")
-	}
+	for idx, chunk := range chunks {
+		// Generate embedding for the content
+		embeddings, err := e.embedder.Embed(context.Background(), []string{chunk})
+		if err != nil {
+			return fmt.Errorf("failed to generate embedding: %w", err)
+		}
 
-	// Store the embedding
-	if err := e.storage.StoreEmbedding(id, embeddings[0], content, metadata); err != nil {
-		return fmt.Errorf("failed to store embedding: %w", err)
+		if len(embeddings) == 0 {
+			return fmt.Errorf("no embedding generated")
+		}
+		// Store the embedding
+		if err := e.storage.StoreEmbedding(fmt.Sprintf("%s_%d", id, idx), embeddings[0], chunk, metadata); err != nil {
+			return fmt.Errorf("failed to store embedding: %w", err)
+		}
 	}
 
 	return nil
 }
 
 // Search searches for documents matching the query
-func (e *OpenAIEmbedder) Search(query string, filter map[string]string, limit int, minRelevance float64) ([]SearchResult, error) {
+func (e *DocEmbedder) Search(query string, filter map[string]string, limit int, minRelevance float64) ([]SearchResult, error) {
 	// Generate embedding for the query
 	embeddings, err := e.embedder.Embed(context.Background(), []string{query})
 	if err != nil {

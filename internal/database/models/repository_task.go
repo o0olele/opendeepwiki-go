@@ -13,26 +13,5 @@ type RepositoryTask struct {
 }
 
 func (t *RepositoryTask) StatusString() string {
-	switch t.Status {
-	case RepositoryTaskStatusPending:
-		return "Pending"
-	case RepositoryTaskStatusCloned:
-		return "Cloning"
-	case RepositoryTaskStatusAnalyzed:
-		return "Analyzing"
-	case RepositoryTaskStatusCompleted:
-		return "Completed"
-	case RepositoryTaskStatusFailed:
-		return "Failed"
-	default:
-		return "Unknown"
-	}
+	return getStatusString(t.Status)
 }
-
-const (
-	RepositoryTaskStatusPending = iota
-	RepositoryTaskStatusCloned
-	RepositoryTaskStatusAnalyzed
-	RepositoryTaskStatusCompleted
-	RepositoryTaskStatusFailed
-)

@@ -60,12 +60,17 @@ func init() {
 }
 
 func (r *Repository) readFiles(paths []string) string {
-	dic := make(map[string]string)
+	var (
+		total int
+		dic   = make(map[string]string)
+	)
+
 	for _, p := range paths {
 		item := path.Join(r.Path, p)
 		if info, err := os.Stat(item); err == nil {
-			if info.Size() > 1024*100 {
-				return "target file is too large."
+			total += int(info.Size())
+			if total > 81920 {
+				return "target files is too large."
 			}
 
 			content, err := ReadFile(item)
@@ -100,6 +105,23 @@ func (r *Repository) updateMessageHistory(messageHistory []llms.MessageContent, 
 
 func (r *Repository) executeToolCalls(llm llms.Model, messageHistory []llms.MessageContent, choice *llms.ContentChoice) []llms.MessageContent {
 
+	for idx, toolCall := range choice.ToolCalls {
+		if len(toolCall.ID) <= 0 {
+			continue
+		}
+		for idy := idx + 1; idy < len(choice.ToolCalls); idy++ {
+			tmpCall := choice.ToolCalls[idy]
+			if len(tmpCall.ID) > 0 {
+				break
+			}
+			toolCall.ID += tmpCall.ID
+			if toolCall.FunctionCall != nil {
+				toolCall.FunctionCall.Name += tmpCall.FunctionCall.Name
+				toolCall.FunctionCall.Arguments += tmpCall.FunctionCall.Arguments
+			}
+		}
+	}
+
 	for _, toolCall := range choice.ToolCalls {
 		switch toolCall.FunctionCall.Name {
 		case "readFiles":
@@ -107,7 +129,7 @@ func (r *Repository) executeToolCalls(llm llms.Model, messageHistory []llms.Mess
 				FilePaths []string `json:"filePaths"`
 			}
 			if err := json.Unmarshal([]byte(toolCall.FunctionCall.Arguments), &args); err != nil {
-				zap.L().Error("tool call arguments unmarshal failed: %v", zap.Error(err))
+				zap.L().Warn("tool call arguments unmarshal failed: %v", zap.Error(err))
 				continue
 			}
 
@@ -128,7 +150,7 @@ func (r *Repository) executeToolCalls(llm llms.Model, messageHistory []llms.Mess
 				MinRelevance float64 `json:"minRelevance"`
 			}
 			if err := json.Unmarshal([]byte(toolCall.FunctionCall.Arguments), &args); err != nil {
-				zap.L().Error("tool call arguments unmarshal failed: %v", zap.Error(err))
+				zap.L().Warn("tool call arguments unmarshal failed: %v", zap.Error(err))
 				continue
 			}
 

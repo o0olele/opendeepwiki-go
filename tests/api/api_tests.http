@@ -6,7 +6,7 @@
 @contentType = application/json
 
 ### Submit a repository for documentation
-POST {{baseUrl}}/warehouse/repos
+POST {{baseUrl}}/repo/create
 Content-Type: {{contentType}}
 
 {

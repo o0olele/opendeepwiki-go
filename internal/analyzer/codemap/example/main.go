@@ -16,15 +16,10 @@ func main() {
 	}
 
 	repoPath := os.Args[1]
-	apiKey := os.Args[2]
 
 	// Create a new code map service
 	service, err := codemap.NewCodeMapService(
-		apiKey,                   // OpenAI API key
-		"text-embedding-3-small", // OpenAI embedding model
-		"",                       // Base URL for OpenAI API (leave empty for default)
-		1536,                     // Embedding dimensions
-		repoPath,                 // Base path for the repository
+		repoPath, // Base path for the repository
 	)
 	if err != nil {
 		log.Fatalf("Failed to create code map service: %v", err)
@@ -32,7 +27,7 @@ func main() {
 
 	// Index the repository
 	fmt.Println("Indexing repository...")
-	err = service.IndexRepository(repoPath, "example-repo")
+	_, err = service.IndexRepository(repoPath, "example-repo")
 	if err != nil {
 		log.Fatalf("Failed to index repository: %v", err)
 	}

@@ -71,8 +71,6 @@ func migrateModels() error {
 		&models.Repository{},
 		&models.RepositoryTask{},
 		&models.Document{},
-		&models.CodeAnalysis{},
-		&models.DocumentCommitRecord{},
 		&models.LLMSettings{},
 	)
 }

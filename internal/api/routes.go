@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/o0olele/opendeepwiki-go/internal/api/document"
 	"github.com/o0olele/opendeepwiki-go/internal/api/repository"
 )
 
@@ -13,4 +14,6 @@ func RegisterRoutes(router *gin.Engine) {
 	// Register warehouse routes
 	repository.RegisterRoutes(apiGroup)
 
+	// Register other routes here
+	document.RegisterRoutes(apiGroup)
 }

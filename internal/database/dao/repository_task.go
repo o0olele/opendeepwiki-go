@@ -23,7 +23,7 @@ func NewRepositoryTaskDAO() *RepositoryTaskDAO {
 func (dao *RepositoryTaskDAO) CreateRepositoryTask(gitURL string) (*models.RepositoryTask, error) {
 	task := &models.RepositoryTask{
 		GitURL: gitURL,
-		Status: models.RepositoryTaskStatusPending,
+		Status: models.RepositoryStatusPending,
 	}
 
 	result := dao.db.Create(task)

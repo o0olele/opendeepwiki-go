@@ -16,6 +16,7 @@ type TaskQueue struct {
 	repoDir  string
 	taskChan chan *Task
 	taskDao  *dao.RepositoryTaskDAO
+	repoDao  *dao.RepositoryDAO
 }
 
 // NewTaskQueue creates a new task queue
@@ -33,6 +34,7 @@ func NewTaskQueue(repoDir string) *TaskQueue {
 		repoDir:  repoDir,
 		taskChan: make(chan *Task, 1024), // Buffer size of 1024 tasks
 		taskDao:  dao.NewRepositoryTaskDAO(),
+		repoDao:  dao.NewRepositoryDAO(),
 	}
 
 	return taskQueue
@@ -47,7 +49,7 @@ func (tq *TaskQueue) recoverPendingTasks() {
 	zap.L().Info("Recovering pending tasks from database...")
 
 	// find all tasks with status not in ["completed", "failed"]
-	tasks, err := tq.taskDao.ListRepositoryTasksByStatus(models.RepositoryTaskStatusPending, 10, 0)
+	tasks, err := tq.taskDao.ListRepositoryTasksByStatus(models.RepositoryStatusPending, 10, 0)
 	if err != nil {
 		zap.L().Error("Failed to list repository tasks: %v", zap.Error(err))
 		return
@@ -93,6 +95,7 @@ func (tq *TaskQueue) ProcessTasks() {
 			case task := <-tq.taskChan:
 				task.Process(&TaskProcessParams{
 					taskDao: tq.taskDao,
+					repoDao: tq.repoDao,
 					repoDir: tq.repoDir,
 				})
 			case <-ticker.C:

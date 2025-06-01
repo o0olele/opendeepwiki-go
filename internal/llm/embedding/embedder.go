@@ -44,6 +44,8 @@ func (f *Factory) Create() (Embedder, error) {
 	switch f.Provider {
 	case "openai":
 		return NewOpenAIEmbedder(f.APIKey, f.Model, f.BaseUrl, f.Dimensions)
+	case "llamacpp":
+		return NewLlamaCppEmbedder(f.APIKey, f.Model, f.BaseUrl, f.Dimensions)
 	default:
 		// Default to OpenAI
 		return NewOpenAIEmbedder(f.APIKey, f.Model, f.BaseUrl, f.Dimensions)

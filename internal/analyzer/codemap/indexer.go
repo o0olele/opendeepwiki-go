@@ -13,6 +13,7 @@ type CodeIndexer struct {
 	embedder Embedder
 	analyzer *DependencyAnalyzer
 	basePath string
+	inited   bool
 }
 
 // Embedder defines the interface for generating embeddings
@@ -25,16 +26,36 @@ type Embedder interface {
 }
 
 // NewCodeIndexer creates a new code indexer
-func NewCodeIndexer(embedder Embedder, basePath string) *CodeIndexer {
+func NewCodeIndexer(embedder Embedder, basePath string, analyzer *DependencyAnalyzer) *CodeIndexer {
 	return &CodeIndexer{
 		embedder: embedder,
-		analyzer: NewDependencyAnalyzer(basePath),
+		analyzer: analyzer,
 		basePath: basePath,
 	}
 }
 
+func (i *CodeIndexer) LoadFromFile(codePath string) error {
+	err := i.analyzer.LoadFromFile(codePath)
+	if err != nil {
+		return fmt.Errorf("failed to load analyzer: %w", err)
+	}
+	i.inited = true
+	return nil
+}
+
+func (i *CodeIndexer) SaveToFile(codePath string) error {
+	err := i.analyzer.SaveToFile(codePath)
+	if err != nil {
+		return fmt.Errorf("failed to save analyzer: %w", err)
+	}
+	return nil
+}
+
 // IndexCodeFile indexes a code file for searching
 func (i *CodeIndexer) IndexCodeFile(filePath string, warehouseID string) error {
+	if i.inited {
+		return nil
+	}
 	// Check if file exists
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		return fmt.Errorf("file not found: %s", filePath)

@@ -8,42 +8,83 @@ import (
 
 // CodeMapService provides a high-level interface for code mapping functionality
 type CodeMapService struct {
-	indexer  *CodeIndexer
-	analyzer *DependencyAnalyzer
+	indexer   *CodeIndexer
+	analyzer  *DependencyAnalyzer
+	embedding *InMemoryEmbeddingStorage
 }
 
 // NewCodeMapService creates a new code map service
-func NewCodeMapService(apiKey, model, baseUrl string, dimensions int, basePath string) (*CodeMapService, error) {
+func NewCodeMapService(basePath string) (*CodeMapService, error) {
+
 	// Create storage
-	storage := NewInMemoryEmbeddingStorage()
+	var storage = NewInMemoryEmbeddingStorage()
 
 	// Create embedder
-	embedder, err := NewOpenAIEmbedder(apiKey, model, baseUrl, dimensions, storage)
+	embedder, err := NewEmbedder(storage)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create embedder: %w", err)
 	}
-
-	// Create indexer
-	indexer := NewCodeIndexer(embedder, basePath)
-
 	// Create analyzer
 	analyzer := NewDependencyAnalyzer(basePath)
 
+	// Create indexer
+	indexer := NewCodeIndexer(embedder, basePath, analyzer)
+
 	return &CodeMapService{
-		indexer:  indexer,
-		analyzer: analyzer,
+		indexer:   indexer,
+		analyzer:  analyzer,
+		embedding: storage,
 	}, nil
 }
 
+func (s *CodeMapService) LoadFromFile(codePath, vectorPath string) error {
+	if len(codePath) > 0 {
+		err := s.indexer.LoadFromFile(codePath)
+		if err != nil {
+			return fmt.Errorf("failed to load analyzer: %w", err)
+		}
+	}
+
+	if len(vectorPath) > 0 {
+		err := s.embedding.LoadFromFile(vectorPath)
+		if err != nil {
+			return fmt.Errorf("failed to load embedding: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (s *CodeMapService) SaveToFile(codePath, vectorPath string) error {
+	if len(codePath) > 0 {
+		err := s.indexer.SaveToFile(codePath)
+		if err != nil {
+			return fmt.Errorf("failed to save analyzer: %w", err)
+		}
+	}
+
+	if len(vectorPath) > 0 {
+		err := s.embedding.SaveToFile(vectorPath)
+		if err != nil {
+			return fmt.Errorf("failed to save embedding: %w", err)
+		}
+	}
+	return nil
+}
+
 // IndexRepository indexes all code files in a repository
-func (s *CodeMapService) IndexRepository(repoPath, warehouseID string) error {
+func (s *CodeMapService) IndexRepository(repoPath, warehouseID string) (bool, error) {
 	// Initialize the analyzer
 	if err := s.analyzer.Initialize(); err != nil {
-		return fmt.Errorf("failed to initialize analyzer: %w", err)
+		return true, fmt.Errorf("failed to initialize analyzer: %w", err)
+	}
+
+	if s.indexer.inited {
+		return false, nil
 	}
 
 	// Walk the repository and index all code files
-	return filepath.Walk(repoPath, func(path string, info os.FileInfo, err error) error {
+	err := filepath.Walk(repoPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -65,6 +106,11 @@ func (s *CodeMapService) IndexRepository(repoPath, warehouseID string) error {
 
 		return nil
 	})
+	if err != nil {
+		return true, fmt.Errorf("failed to walk repository: %w", err)
+	}
+
+	return true, nil
 }
 
 // SearchCode searches for code matching the query

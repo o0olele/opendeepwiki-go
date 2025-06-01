@@ -20,11 +20,12 @@ func NewRepositoryDAO() *RepositoryDAO {
 }
 
 // CreateRepository Create a new repository record.
-func (dao *RepositoryDAO) CreateRepository(gitURL string, name string, description string) (*models.Repository, error) {
+func (dao *RepositoryDAO) CreateRepository(gitURL, name, path string, status int) (*models.Repository, error) {
 	repo := &models.Repository{
-		GitURL:      gitURL,
-		Name:        name,
-		Description: description,
+		GitURL: gitURL,
+		Name:   name,
+		Path:   path,
+		Status: status,
 	}
 	result := dao.db.Create(repo)
 	if result.Error != nil {
@@ -77,5 +78,40 @@ func (dao *RepositoryDAO) UpdateRepository(repo *models.Repository) error {
 // DeleteRepository Delete a repository record.
 func (dao *RepositoryDAO) DeleteRepository(id uint) error {
 	result := dao.db.Delete(&models.Repository{}, id)
+	return result.Error
+}
+
+func (dao *RepositoryDAO) UpdateRepositoryDescription(id uint, description string) error {
+	result := dao.db.Model(&models.Repository{}).Where("id = ?", id).Update("description", description)
+	return result.Error
+}
+
+func (dao *RepositoryDAO) UpdateRepositoryStatus(id uint, status int) error {
+	result := dao.db.Model(&models.Repository{}).Where("id =?", id).Update("status", status)
+	return result.Error
+}
+
+func (dao *RepositoryDAO) UpdateRepositoryReadme(id uint, readme string) error {
+	result := dao.db.Model(&models.Repository{}).Where("id =?", id).Update("readme", readme)
+	return result.Error
+}
+
+func (dao *RepositoryDAO) UpdateRepositoryCatalogue(id uint, catalogue string) error {
+	result := dao.db.Model(&models.Repository{}).Where("id =?", id).Update("structured_catalogue", catalogue)
+	return result.Error
+}
+
+func (dao *RepositoryDAO) UpdateRepositoryCodePath(id uint, codePath string) error {
+	result := dao.db.Model(&models.Repository{}).Where("id =?", id).Update("structured_code_path", codePath)
+	return result.Error
+}
+
+func (dao *RepositoryDAO) UpdateRepositoryOverview(id uint, overview string) error {
+	result := dao.db.Model(&models.Repository{}).Where("id =?", id).Update("overview", overview)
+	return result.Error
+}
+
+func (dao *RepositoryDAO) UpdateRepositoryVectorPath(id uint, vectorPath string) error {
+	result := dao.db.Model(&models.Repository{}).Where("id =?", id).Update("structured_vector_path", vectorPath)
 	return result.Error
 }

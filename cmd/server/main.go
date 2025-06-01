@@ -3,6 +3,7 @@ package main
 import (
 	"sync"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/o0olele/opendeepwiki-go/internal/api"
 	"github.com/o0olele/opendeepwiki-go/internal/config"
@@ -52,6 +53,11 @@ func main() {
 	// Setup Gin router
 	router := gin.Default()
 
+	corsConfig := cors.DefaultConfig()
+	corsConfig.AllowAllOrigins = true
+	corsConfig.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
+	corsConfig.AllowHeaders = []string{"Origin", "Content-Type", "Authorization"}
+	router.Use(cors.New(corsConfig))
 	// Register API routes
 	api.RegisterRoutes(router)
 

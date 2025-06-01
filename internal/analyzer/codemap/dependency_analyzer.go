@@ -9,11 +9,11 @@ import (
 
 // DependencyAnalyzer analyzes code dependencies in a repository
 type DependencyAnalyzer struct {
-	fileDependencies     map[string]map[string]bool // Map of file to its dependencies
-	functionDependencies map[string]map[string]bool // Map of function to its dependencies
-	fileToFunctions      map[string][]*FunctionInfo // Map of file to its functions
-	functionToFile       map[string]string          // Map of function full name to its file
-	basePath             string                     // Base path of the repository
+	FileDependencies     map[string]map[string]bool // Map of file to its dependencies
+	FunctionDependencies map[string]map[string]bool // Map of function to its dependencies
+	FileToFunctions      map[string][]*FunctionInfo // Map of file to its functions
+	FunctionToFile       map[string]string          // Map of function full name to its file
+	BasePath             string                     // Base path of the repository
 	mutex                sync.RWMutex               // Mutex for concurrent access
 	initialized          bool                       // Whether the analyzer has been initialized
 }
@@ -21,11 +21,11 @@ type DependencyAnalyzer struct {
 // NewDependencyAnalyzer creates a new dependency analyzer
 func NewDependencyAnalyzer(basePath string) *DependencyAnalyzer {
 	return &DependencyAnalyzer{
-		fileDependencies:     make(map[string]map[string]bool),
-		functionDependencies: make(map[string]map[string]bool),
-		fileToFunctions:      make(map[string][]*FunctionInfo),
-		functionToFile:       make(map[string]string),
-		basePath:             basePath,
+		FileDependencies:     make(map[string]map[string]bool),
+		FunctionDependencies: make(map[string]map[string]bool),
+		FileToFunctions:      make(map[string][]*FunctionInfo),
+		FunctionToFile:       make(map[string]string),
+		BasePath:             basePath,
 		initialized:          false,
 	}
 }
@@ -36,7 +36,7 @@ func (a *DependencyAnalyzer) Initialize() error {
 		return nil
 	}
 
-	files, err := a.getAllSourceFiles(a.basePath)
+	files, err := a.getAllSourceFiles(a.BasePath)
 	if err != nil {
 		return err
 	}
@@ -82,15 +82,29 @@ func (a *DependencyAnalyzer) Initialize() error {
 	return nil
 }
 
+func (a *DependencyAnalyzer) LoadFromFile(filePath string) error {
+	err := readFromFile(filePath, a, "")
+	if err != nil {
+		return err
+	}
+
+	a.initialized = true
+	return nil
+}
+
+func (a *DependencyAnalyzer) SaveToFile(filePath string) error {
+	return persistToFile(filePath, a, false, "")
+}
+
 // processFile processes a single file
 func (a *DependencyAnalyzer) processFile(filePath, fileContent string, parser LanguageParser) error {
 	// Extract imports
 	imports := parser.ExtractImports(fileContent)
-	resolvedImports := a.resolveImportPaths(imports, filePath, a.basePath)
+	resolvedImports := a.resolveImportPaths(imports, filePath, a.BasePath)
 
 	// Store file dependencies
 	a.mutex.Lock()
-	a.fileDependencies[filePath] = resolvedImports
+	a.FileDependencies[filePath] = resolvedImports
 	a.mutex.Unlock()
 
 	// Extract functions
@@ -110,12 +124,12 @@ func (a *DependencyAnalyzer) processFile(filePath, fileContent string, parser La
 		functionInfoList = append(functionInfoList, functionInfo)
 
 		a.mutex.Lock()
-		a.functionToFile[functionInfo.FullName] = filePath
+		a.FunctionToFile[functionInfo.FullName] = filePath
 		a.mutex.Unlock()
 	}
 
 	a.mutex.Lock()
-	a.fileToFunctions[filePath] = functionInfoList
+	a.FileToFunctions[filePath] = functionInfoList
 	a.mutex.Unlock()
 
 	return nil
@@ -260,7 +274,7 @@ func (a *DependencyAnalyzer) buildFileDependencyTree(filePath string, visited ma
 
 	// Add child file dependencies
 	a.mutex.RLock()
-	dependencies := a.fileDependencies[filePath]
+	dependencies := a.FileDependencies[filePath]
 	a.mutex.RUnlock()
 
 	for dependency := range dependencies {
@@ -275,7 +289,7 @@ func (a *DependencyAnalyzer) buildFileDependencyTree(filePath string, visited ma
 
 	// Add functions in the file
 	a.mutex.RLock()
-	functions := a.fileToFunctions[filePath]
+	functions := a.FileToFunctions[filePath]
 	a.mutex.RUnlock()
 
 	for _, function := range functions {
@@ -320,7 +334,7 @@ func (a *DependencyAnalyzer) buildFunctionDependencyTree(filePath, functionName 
 
 	// Find the current function info
 	a.mutex.RLock()
-	functions := a.fileToFunctions[filePath]
+	functions := a.FileToFunctions[filePath]
 	a.mutex.RUnlock()
 
 	for _, function := range functions {
@@ -353,7 +367,7 @@ func (a *DependencyAnalyzer) buildFunctionDependencyTree(filePath, functionName 
 func (a *DependencyAnalyzer) resolveFunctionCall(functionCall, currentFile string) *FunctionInfo {
 	// Check if the function is in the current file
 	a.mutex.RLock()
-	functions := a.fileToFunctions[currentFile]
+	functions := a.FileToFunctions[currentFile]
 	a.mutex.RUnlock()
 
 	for _, function := range functions {
@@ -367,7 +381,7 @@ func (a *DependencyAnalyzer) resolveFunctionCall(functionCall, currentFile strin
 	a.mutex.RLock()
 	defer a.mutex.RUnlock()
 
-	for _, fileFunctions := range a.fileToFunctions {
+	for _, fileFunctions := range a.FileToFunctions {
 		for _, function := range fileFunctions {
 			if function.Name == functionCall {
 				return function

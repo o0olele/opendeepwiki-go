@@ -26,7 +26,7 @@ func NewOpenAIEmbedder(apiKey, model, baseUrl string, dimensions int) (*OpenAIEm
 		openai.WithToken(apiKey),
 	}
 	if len(model) > 0 {
-		opts = append(opts, openai.WithModel(model))
+		opts = append(opts, openai.WithEmbeddingModel(model))
 	}
 	if len(baseUrl) > 0 {
 		opts = append(opts, openai.WithBaseURL(baseUrl))

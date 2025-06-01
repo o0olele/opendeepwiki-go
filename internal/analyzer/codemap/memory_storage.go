@@ -9,16 +9,39 @@ import (
 
 // InMemoryEmbeddingStorage implements the EmbeddingStorage interface using in-memory storage
 type InMemoryEmbeddingStorage struct {
-	embeddings map[string]EmbeddingRecord
-	mutex      sync.RWMutex
+	Embeddings map[string]EmbeddingRecord
+	mutex      sync.RWMutex `gob:"-"`
 }
 
 // NewInMemoryEmbeddingStorage creates a new in-memory embedding storage
 func NewInMemoryEmbeddingStorage() *InMemoryEmbeddingStorage {
-	return &InMemoryEmbeddingStorage{
-		embeddings: make(map[string]EmbeddingRecord),
+
+	tmp := &InMemoryEmbeddingStorage{
+		Embeddings: make(map[string]EmbeddingRecord),
 		mutex:      sync.RWMutex{},
 	}
+	return tmp
+}
+
+func (s *InMemoryEmbeddingStorage) LoadFromFile(filePath string) error {
+	embeddings := make(map[string]EmbeddingRecord)
+
+	err := readFromFile(filePath, embeddings, "")
+	if err != nil {
+		return err
+	}
+
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	s.Embeddings = embeddings
+	return nil
+}
+
+func (s *InMemoryEmbeddingStorage) SaveToFile(filePath string) error {
+	s.mutex.RLock()
+	defer s.mutex.RUnlock()
+
+	return persistToFile(filePath, s.Embeddings, false, "")
 }
 
 // StoreEmbedding stores an embedding with metadata
@@ -26,7 +49,7 @@ func (s *InMemoryEmbeddingStorage) StoreEmbedding(id string, embedding []float32
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	s.embeddings[id] = EmbeddingRecord{
+	s.Embeddings[id] = EmbeddingRecord{
 		ID:        id,
 		Content:   content,
 		Metadata:  metadata,
@@ -44,7 +67,7 @@ func (s *InMemoryEmbeddingStorage) SearchEmbeddings(queryEmbedding []float32, fi
 	var results []EmbeddingRecord
 
 	// Apply filter and calculate similarity
-	for _, record := range s.embeddings {
+	for _, record := range s.Embeddings {
 		// Apply filter
 		if !matchesFilter(record, filter) {
 			continue
@@ -116,7 +139,7 @@ func (s *InMemoryEmbeddingStorage) GetEmbedding(id string) (EmbeddingRecord, err
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 
-	record, ok := s.embeddings[id]
+	record, ok := s.Embeddings[id]
 	if !ok {
 		return EmbeddingRecord{}, fmt.Errorf("embedding not found: %s", id)
 	}
@@ -129,11 +152,11 @@ func (s *InMemoryEmbeddingStorage) DeleteEmbedding(id string) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	if _, ok := s.embeddings[id]; !ok {
+	if _, ok := s.Embeddings[id]; !ok {
 		return fmt.Errorf("embedding not found: %s", id)
 	}
 
-	delete(s.embeddings, id)
+	delete(s.Embeddings, id)
 	return nil
 }
 
@@ -143,7 +166,7 @@ func (s *InMemoryEmbeddingStorage) ListEmbeddings() []EmbeddingRecord {
 	defer s.mutex.RUnlock()
 
 	var records []EmbeddingRecord
-	for _, record := range s.embeddings {
+	for _, record := range s.Embeddings {
 		records = append(records, record)
 	}
 
