@@ -13,7 +13,6 @@ import (
 	"github.com/o0olele/opendeepwiki-go/internal/config"
 	"github.com/o0olele/opendeepwiki-go/internal/database/models"
 	"github.com/o0olele/opendeepwiki-go/internal/llm/chat"
-	"github.com/o0olele/opendeepwiki-go/internal/utils"
 	"go.uber.org/zap"
 )
 
@@ -29,6 +28,7 @@ type Repository struct {
 	StructedCatalogue  string // structured catalogue of the repository
 	StructedCodePath   string
 	StructedVectorPath string
+	Language           string // language of the repository
 
 	// internal fields
 	repo        *git.Repository
@@ -50,13 +50,20 @@ func NewRepositoryFromModel(repo *models.Repository) (*Repository, error) {
 		StructedCatalogue:  repo.StructedCatalogue,
 		StructedCodePath:   repo.StructedCodePath,
 		StructedVectorPath: repo.StructedVectorPath,
+		Language:           repo.Language,
 	}
 	gitRepo, err := git.PlainOpen(repo.Path)
 	if err != nil {
 		return nil, fmt.Errorf("open repository failed: %w", err)
 	}
 	r.repo = gitRepo
-	r.fileScanner = NewFileScanner(nil)
+	r.fileScanner = NewFileScanner(&AnalyzeOptions{
+		EnableSmartFilter: true,
+		ExcludedFiles:     DefaultExcludedFiles,
+		MaxFileSize:       1024 * 1024, // 1MB
+		MaxTokens:         8192,
+		Language:          repo.Language,
+	})
 
 	// get the repository catalog
 	catalogs, err := r.fileScanner.GetCatalogue(r.Path)
@@ -82,61 +89,6 @@ func NewRepositoryFromModel(repo *models.Repository) (*Repository, error) {
 	r.provider = provider
 
 	return r, nil
-}
-
-// NewRepository creates a new Repository instance.
-func NewRepository(repoDir string, gitURL string) (*Repository, error) {
-	// extract the repository name from the git URL
-	name, err := utils.ExtractRepoName(gitURL)
-	if err != nil {
-		return nil, fmt.Errorf("extract repository name failed: %w", err)
-	}
-
-	// check if the path exists
-	repoPath := path.Join(repoDir, name)
-	if _, err = os.Stat(repoPath); os.IsNotExist(err) {
-		return nil, fmt.Errorf("repository path does not exist: %s", repoPath)
-	}
-
-	// open the repository
-	repo, err := git.PlainOpen(repoPath)
-	if err != nil {
-		return nil, fmt.Errorf("open repository failed: %w", err)
-	}
-
-	zap.L().Info("repository name", zap.String("name", name))
-
-	fileScanner := NewFileScanner(nil)
-	// get the repository catalog
-	catalogs, err := fileScanner.GetCatalogue(repoPath)
-	if err != nil {
-		zap.L().Error("get repository catalog failed", zap.Error(err))
-		return nil, err
-	}
-
-	llmConfig := config.GetLLMConfig()
-	// create the llm provider
-	provider, err := chat.NewProvider(&chat.ProviderConfig{
-		Type:        chat.ProviderType(llmConfig.ProviderType),
-		APIKey:      llmConfig.APIKey,
-		Model:       llmConfig.Model,
-		MaxTokens:   llmConfig.MaxTokens,
-		Temperature: llmConfig.Temperature,
-		BaseURL:     llmConfig.BaseURL,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("create llm provider failed: %w", err)
-	}
-
-	return &Repository{
-		Path:        repoPath,
-		GitURL:      gitURL,
-		Name:        name,
-		repo:        repo,
-		fileScanner: fileScanner,
-		catalogs:    catalogs,
-		provider:    provider,
-	}, nil
 }
 
 func (r *Repository) getStructedCodePath(raw string) string {

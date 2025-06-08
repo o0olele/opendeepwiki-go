@@ -61,3 +61,5 @@ The final output should be a JSON structure representing the documentation hiera
   ]
         }
 </documentation_structure>
+
+Finally, answered in {{.language}}.

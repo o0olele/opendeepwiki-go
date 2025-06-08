@@ -2,6 +2,7 @@ package services
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"time"
@@ -25,6 +26,7 @@ type TaskProcessParams struct {
 type Task struct {
 	ID        uint      `json:"id"` // task id
 	GitURL    string    `json:"git_url"`
+	Language  string    `json:"language"`
 	CreatedAt time.Time `json:"created_at"`
 	Status    int       `json:"status"`
 }
@@ -34,6 +36,7 @@ func NewTaskFromModel(task *models.RepositoryTask) *Task {
 	return &Task{
 		ID:        task.ID,
 		GitURL:    task.GitURL,
+		Language:  task.Language,
 		CreatedAt: task.CreatedAt,
 		Status:    int(task.Status),
 	}
@@ -123,7 +126,7 @@ func (t *Task) Clone(params *TaskProcessParams) error {
 		return err
 	}
 
-	params.repoDao.CreateRepository(t.GitURL, repoName, repoPath, models.RepositoryStatusCloned)
+	params.repoDao.CreateRepository(t.GitURL, repoName, repoPath, models.RepositoryStatusCloned, t.Language)
 	return nil
 }
 
@@ -138,7 +141,8 @@ func (t *Task) Analyze(params *TaskProcessParams) error {
 		zap.L().Info("Repository already exists", zap.Uint("repository_id", repoModal.ID))
 		r, err = analyzer.NewRepositoryFromModel(repoModal)
 	} else {
-		r, err = analyzer.NewRepository(params.repoDir, t.GitURL)
+		zap.L().Info("Repository not found", zap.String("git_url", t.GitURL))
+		return fmt.Errorf("repository not found")
 	}
 
 	if err != nil {

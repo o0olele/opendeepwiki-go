@@ -152,4 +152,6 @@ For each major component or file analyzed, include reference links using:
 - Basic file reference: [filename]({{.git_repository}}/path/to/file)
 - Line-specific reference: [filename]({{.git_repository}}/path/to/file#L1-L10)
 
+Finally, answered in {{.language}}.
+
 Please output the main text to <blog></blog>. Do not explain or reply to me. Please start outputting the main text:

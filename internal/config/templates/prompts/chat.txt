@@ -46,3 +46,5 @@ You are an expert code analyst specializing in git repositories. Your mission is
 - Present code snippets using ```language syntax highlighting
 - Organize findings logically from architecture to implementation details
 </style>
+
+Finally, answered in {{.language}}.

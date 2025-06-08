@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/o0olele/opendeepwiki-go/internal/database/dao"
+	"github.com/o0olele/opendeepwiki-go/internal/database/models"
 )
 
 // RepositoryHandler Warehouse handler.
@@ -25,7 +26,8 @@ func NewRepositoryHandler() *RepositoryHandler {
 func (h *RepositoryHandler) CreateRepository(c *gin.Context) {
 	// 解析请求
 	var req struct {
-		GitURL string `json:"git_url" binding:"required"`
+		GitURL   string `json:"git_url" binding:"required"`
+		Language string `json:"language" binding:"required"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -43,6 +45,14 @@ func (h *RepositoryHandler) CreateRepository(c *gin.Context) {
 		return
 	}
 
+	// 验证语言
+	if !isValidLanguage(req.Language) {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid language",
+		})
+		return
+	}
+
 	// 检查是否已存在相同的仓库任务
 	if task, err := h.taskDao.GetRepositoryTaskByGitURL(req.GitURL); err == nil {
 		// 已存在进行中的任务
@@ -55,7 +65,7 @@ func (h *RepositoryHandler) CreateRepository(c *gin.Context) {
 		return
 	}
 
-	task, err := h.taskDao.CreateRepositoryTask(req.GitURL)
+	task, err := h.taskDao.CreateRepositoryTask(req.GitURL, req.Language)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to create task: " + err.Error(),
@@ -152,4 +162,8 @@ func isValidGitURL(url string) bool {
 		url[:7] == "http://" ||
 		url[:6] == "git://" ||
 		url[:4] == "ssh:")
+}
+
+func isValidLanguage(language string) bool {
+	return language == models.LanguageEnglish || language == models.LanguageChinese
 }

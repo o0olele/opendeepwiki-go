@@ -21,6 +21,7 @@ func (r *Repository) GenerateReadme() (string, error) {
 			"catalogue":      CatalogueToString(r.Path, r.catalogs),
 			"branch":         r.Branch,
 			"git_repository": r.GitURL,
+			"language":       r.Language,
 		},
 		TemplateFormat: prompts.TemplateFormatGoTemplate,
 	}
@@ -59,6 +60,7 @@ func (r *Repository) GenerateOverview() (string, error) {
 			"branch":         r.Branch,
 			"git_repository": r.GitURL,
 			"readme":         r.Readme,
+			"language":       r.Language,
 		},
 		TemplateFormat: prompts.TemplateFormatGoTemplate,
 	}
@@ -96,6 +98,7 @@ func (r *Repository) generateCatalogue(provider chat.Provider, think string) (*D
 			"think":           think,
 			"code_files":      r.StructedCatalogue,
 			"repository_name": r.Name,
+			"language":        r.Language,
 		},
 		TemplateFormat: prompts.TemplateFormatGoTemplate,
 	}
@@ -152,6 +155,7 @@ func (r *Repository) generateThinkCatalogue(provider chat.Provider) (*DocumentRe
 			"code_files":         r.StructedCatalogue,
 			"git_repository_url": r.GitURL,
 			"repository_name":    r.Name,
+			"language":           r.Language,
 		},
 		TemplateFormat: prompts.TemplateFormatGoTemplate,
 	}
@@ -190,6 +194,7 @@ func (r *Repository) generateCatalogueItem(provider chat.Provider, catalogItem *
 			"git_repository": r.GitURL,
 			"branch":         r.Branch,
 			"catalogue":      r.StructedCatalogue,
+			"language":       r.Language,
 		},
 		TemplateFormat: prompts.TemplateFormatGoTemplate,
 	}

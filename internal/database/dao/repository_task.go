@@ -20,10 +20,11 @@ func NewRepositoryTaskDAO() *RepositoryTaskDAO {
 }
 
 // CreateRepositoryTask Create a new repository task record.
-func (dao *RepositoryTaskDAO) CreateRepositoryTask(gitURL string) (*models.RepositoryTask, error) {
+func (dao *RepositoryTaskDAO) CreateRepositoryTask(gitURL string, language string) (*models.RepositoryTask, error) {
 	task := &models.RepositoryTask{
-		GitURL: gitURL,
-		Status: models.RepositoryStatusPending,
+		GitURL:   gitURL,
+		Language: language,
+		Status:   models.RepositoryStatusPending,
 	}
 
 	result := dao.db.Create(task)

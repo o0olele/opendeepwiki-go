@@ -18,6 +18,7 @@ type Repository struct {
 	StructedCatalogue  string `json:"structured_catalogue"`
 	StructedCodePath   string `json:"structured_code_path"`   // path to the structured code database, default is {repoDir}/{name}.db
 	StructedVectorPath string `json:"structured_vector_path"` // path to the structured vector database, default is {repoDir}/{name}.db
+	Language           string `json:"language"`
 }
 
 func (r *Repository) StatusString() string {

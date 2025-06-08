@@ -51,6 +51,7 @@ type AnalyzeOptions struct {
 	ExcludedFiles     []string `json:"excluded_files"`      // 排除的文件
 	MaxFileSize       int64    `json:"max_file_size"`       // 最大文件大小（字节）
 	MaxTokens         int      `json:"max_tokens"`          // 最大令牌数
+	Language          string   `json:"language"`            // 语言
 }
 
 type DocumentResultCalalogue struct {

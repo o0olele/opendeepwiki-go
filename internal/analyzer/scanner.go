@@ -51,6 +51,7 @@ func NewFileScanner(options *AnalyzeOptions) *FileScanner {
 			ExcludedFiles:     DefaultExcludedFiles,
 			MaxFileSize:       1024 * 1024, // 1MB
 			MaxTokens:         8192,
+			Language:          "english",
 		}
 	}
 	return &FileScanner{options: options}
@@ -216,6 +217,7 @@ func (fs *FileScanner) GetSimplifyCatalogueString(provider chat.Provider, repoPa
 		PartialVariables: map[string]any{
 			"code_files": CatalogueToString(repoPath, catalogs),
 			"readme":     readme,
+			"language":   fs.options.Language,
 		},
 		TemplateFormat: prompts.TemplateFormatGoTemplate,
 	}

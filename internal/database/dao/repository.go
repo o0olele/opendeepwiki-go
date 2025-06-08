@@ -20,12 +20,13 @@ func NewRepositoryDAO() *RepositoryDAO {
 }
 
 // CreateRepository Create a new repository record.
-func (dao *RepositoryDAO) CreateRepository(gitURL, name, path string, status int) (*models.Repository, error) {
+func (dao *RepositoryDAO) CreateRepository(gitURL, name, path string, status int, language string) (*models.Repository, error) {
 	repo := &models.Repository{
-		GitURL: gitURL,
-		Name:   name,
-		Path:   path,
-		Status: status,
+		GitURL:   gitURL,
+		Name:     name,
+		Path:     path,
+		Status:   status,
+		Language: language,
 	}
 	result := dao.db.Create(repo)
 	if result.Error != nil {
